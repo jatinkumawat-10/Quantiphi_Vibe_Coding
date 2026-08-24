@@ -4,6 +4,7 @@ import apiClient from '../../../utils/apiClient.js';
  * Subscription API Module
  * 
  * Handles all subscription-related API calls.
+ * Updated with new features: notes, cost-splitting, free trial
  */
 
 /**
@@ -18,12 +19,25 @@ export async function getSubscriptions() {
 
 /**
  * Create a new subscription
+ * Updated with new fields: notes, cost-splitting, free trial
  * 
- * @param {Object} data - { serviceName, cost, billingCycle, nextRenewalDate }
+ * @param {Object} data - subscription data
  * @returns {Promise<Object>} Created subscription
  */
 export async function createSubscription(data) {
   const response = await apiClient.post('/subscriptions', data);
+  return response.data.data;
+}
+
+/**
+ * Update a subscription (notes, cost-splitting, trial, etc.)
+ * 
+ * @param {string} id - Subscription ID
+ * @param {Object} data - fields to update
+ * @returns {Promise<Object>} Updated subscription
+ */
+export async function updateSubscription(id, data) {
+  const response = await apiClient.patch(`/subscriptions/${id}`, data);
   return response.data.data;
 }
 
@@ -41,8 +55,9 @@ export async function toggleSubscriptionStatus(id, status) {
 
 /**
  * Get dashboard metrics
+ * Updated with trialEndingCount
  * 
- * @returns {{ totalMonthlyBurnRate: number, upcomingRenewalsCount: number }}
+ * @returns {{ totalMonthlyBurnRate: number, upcomingRenewalsCount: number, trialEndingCount: number }}
  */
 export async function getMetrics() {
   const response = await apiClient.get('/subscriptions/metrics');

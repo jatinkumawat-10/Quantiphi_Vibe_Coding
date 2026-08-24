@@ -2,12 +2,16 @@ import styled from '@emotion/styled';
 import { format } from 'date-fns';
 import StatusToggle from './StatusToggle.jsx';
 import RenewingSoonBadge from './RenewingSoonBadge.jsx';
+import BillingNudgeBadge from './BillingNudgeBadge.jsx';
+import TrialBadge from './TrialBadge.jsx';
+import SplitBadge from './SplitBadge.jsx';
 
 /**
  * SubscriptionRow Component
  * 
  * Renders a single subscription row in the table.
- * Shows service name, cost, billing cycle, renewal date, status, and toggle.
+ * Shows service name, cost, billing cycle, renewal date, status, toggle,
+ * and new feature badges (nudge, split, trial).
  * 
  * Props:
  * - subscription: Object - subscription data with server-side annotations
@@ -48,10 +52,21 @@ const Cost = styled.span`
   font-variant-numeric: tabular-nums;
 `;
 
+const Notes = styled.div`
+  font-size: ${(props) => props.theme.typography.fontSize.xs};
+  color: ${(props) => props.theme.colors.text.secondary};
+  margin-top: ${(props) => props.theme.spacing[1]};
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const BadgeContainer = styled.div`
   display: flex;
   align-items: center;
   gap: ${(props) => props.theme.spacing[2]};
+  flex-wrap: wrap;
 `;
 
 const StatusBadge = styled.span`
@@ -84,13 +99,24 @@ export default function SubscriptionRow({ subscription, onToggle, isToggling = f
     }).format(amount);
   };
 
+  // Calculate split cost if shared
+  const displayCost = subscription.isShared && subscription.splitCount > 1
+    ? subscription.cost / subscription.splitCount
+    : subscription.cost;
+
   return (
     <Row isPaused={subscription.status === 'PAUSED'}>
       <Cell>
         <ServiceName>{subscription.serviceName}</ServiceName>
+        {subscription.notes && (
+          <Notes title={subscription.notes}>{subscription.notes}</Notes>
+        )}
       </Cell>
       <Cell>
-        <Cost>{formatCurrency(subscription.cost)}</Cost>
+        <Cost>{formatCurrency(displayCost)}</Cost>
+        {subscription.isShared && subscription.splitCount > 1 && (
+          <Notes>of {formatCurrency(subscription.cost)}</Notes>
+        )}
       </Cell>
       <Cell>{subscription.billingCycle}</Cell>
       <Cell>{formatDate(subscription.nextRenewalDate)}</Cell>
@@ -100,6 +126,13 @@ export default function SubscriptionRow({ subscription, onToggle, isToggling = f
           {subscription.isRenewingSoon && (
             <RenewingSoonBadge daysRemaining={subscription.daysRemaining} />
           )}
+          <BillingNudgeBadge nudge={subscription.billingNudge} />
+          <SplitBadge
+            isShared={subscription.isShared}
+            splitCount={subscription.splitCount}
+            splitNote={subscription.splitNote}
+          />
+          <TrialBadge trialStatus={subscription.trialStatus} />
         </BadgeContainer>
       </Cell>
       <Cell>

@@ -19,16 +19,26 @@ model User {
 }
 
 model Subscription {
-  id              String             @id @default(uuid())
-  userId          String             @map("user_id")
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  serviceName     String             @map("service_name")
-  cost            Decimal            @db.Decimal(10, 2)
-  billingCycle    BillingCycle       @map("billing_cycle")
-  nextRenewalDate DateTime           @map("next_renewal_date") @db.Date
-  status          SubscriptionStatus @default(ACTIVE)
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
+  id                   String             @id @default(uuid())
+  userId               String             @map("user_id")
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceName          String             @map("service_name")
+  cost                 Decimal            @db.Decimal(10, 2)
+  billingCycle         BillingCycle       @map("billing_cycle")
+  nextRenewalDate      DateTime           @map("next_renewal_date") @db.Date
+  status               SubscriptionStatus @default(ACTIVE)
+  // Feature 2: Notes
+  notes                String?            @db.Text
+  // Feature 3: Cost-splitting
+  isShared             Boolean            @default(false) @map("is_shared")
+  splitCount           Int                @default(1) @map("split_count")
+  splitNote            String?            @map("split_note")
+  // Feature 4: Free trial tracker
+  isTrial              Boolean            @default(false) @map("is_trial")
+  trialEndDate         DateTime?          @map("trial_end_date") @db.Date
+  trialReminderDays    Int                @default(3) @map("trial_reminder_days")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([userId, status])

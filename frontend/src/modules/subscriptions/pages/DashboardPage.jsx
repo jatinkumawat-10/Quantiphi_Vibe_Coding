@@ -10,8 +10,8 @@ import useSubscriptions from '../hooks/useSubscriptions.js';
  * DashboardPage Component
  * 
  * Main dashboard page with:
- * - Topbar with metrics (burn rate + upcoming renewals)
- * - Entry form for adding new subscriptions
+ * - Topbar with metrics (burn rate + upcoming renewals + trial ending)
+ * - Entry form for adding new subscriptions (with notes, cost-split, trial fields)
  * - Subscription table with toggle and badges
  * 
  * All business logic is handled server-side.
@@ -41,6 +41,7 @@ export default function DashboardPage() {
     isLoading,
     error,
     createSubscription,
+    updateSubscription,
     toggleStatus,
   } = useSubscriptions();
 
