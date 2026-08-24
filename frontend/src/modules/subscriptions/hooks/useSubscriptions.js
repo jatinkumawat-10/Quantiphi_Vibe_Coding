@@ -5,14 +5,16 @@ import * as subscriptionApi from '../api/subscriptionApi.js';
  * useSubscriptions Hook
  * 
  * Manages subscription data and metrics state.
- * Provides functions to fetch, create, and toggle subscriptions.
+ * Provides functions to fetch, create, update, and toggle subscriptions.
  * Implements optimistic UI updates for toggle operations.
+ * Updated with new features: notes, cost-splitting, free trial
  */
 export default function useSubscriptions() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [metrics, setMetrics] = useState({
     totalMonthlyBurnRate: 0,
     upcomingRenewalsCount: 0,
+    trialEndingCount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +54,19 @@ export default function useSubscriptions() {
       return newSubscription;
     } catch (err) {
       const message = err.response?.data?.error?.message || 'Failed to create subscription';
+      throw new Error(message);
+    }
+  }, [fetchData]);
+
+  // Update a subscription
+  const updateSubscription = useCallback(async (id, data) => {
+    try {
+      const updatedSubscription = await subscriptionApi.updateSubscription(id, data);
+      // Refresh data after update
+      await fetchData();
+      return updatedSubscription;
+    } catch (err) {
+      const message = err.response?.data?.error?.message || 'Failed to update subscription';
       throw new Error(message);
     }
   }, [fetchData]);
@@ -101,6 +116,7 @@ export default function useSubscriptions() {
     isLoading,
     error,
     createSubscription,
+    updateSubscription,
     toggleStatus,
     refresh: fetchData,
   };

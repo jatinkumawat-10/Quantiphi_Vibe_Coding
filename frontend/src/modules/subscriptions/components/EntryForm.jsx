@@ -14,6 +14,9 @@ import Button from '../../../components/Button.jsx';
  * - cost (numeric, required, > 0)
  * - billingCycle (dropdown: MONTHLY | YEARLY, required)
  * - nextRenewalDate (date picker, required, future-or-current)
+ * - notes (free-text, optional) - Feature 2
+ * - isShared, splitCount, splitNote - Feature 3
+ * - isTrial, trialEndDate, trialReminderDays - Feature 4
  * 
  * Props:
  * - onSubmit: function(data) - called on valid form submission
@@ -47,6 +50,40 @@ const Form = styled.form`
   }
 `;
 
+const FormRow = styled.div`
+  grid-column: 1 / -1;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: ${(props) => props.theme.typography.fontSize.sm};
+  font-weight: ${(props) => props.theme.typography.fontWeight.semibold};
+  color: ${(props) => props.theme.colors.text.secondary};
+  text-transform: uppercase;
+  letter-spacing: ${(props) => props.theme.typography.letterSpacing.wider};
+  margin-bottom: ${(props) => props.theme.spacing[3]};
+  margin-top: ${(props) => props.theme.spacing[2]};
+  padding-top: ${(props) => props.theme.spacing[4]};
+  border-top: 1px solid ${(props) => props.theme.colors.border.light};
+`;
+
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${(props) => props.theme.spacing[2]};
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: ${(props) => props.theme.typography.fontSize.sm};
+  color: ${(props) => props.theme.colors.text.primary};
+  cursor: pointer;
+`;
+
+const CheckboxInput = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+`;
+
 const ButtonContainer = styled.div`
   grid-column: 1 / -1;
   display: flex;
@@ -69,11 +106,13 @@ const billingCycleOptions = [
 
 export default function EntryForm({ onSubmit, isLoading, error }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -81,8 +120,18 @@ export default function EntryForm({ onSubmit, isLoading, error }) {
       cost: '',
       billingCycle: '',
       nextRenewalDate: '',
+      notes: '',
+      isShared: false,
+      splitCount: 1,
+      splitNote: '',
+      isTrial: false,
+      trialEndDate: '',
+      trialReminderDays: 3,
     },
   });
+
+  const isShared = watch('isShared');
+  const isTrial = watch('isTrial');
 
   const handleFormSubmit = async (data) => {
     setIsSubmitting(true);
@@ -90,8 +139,11 @@ export default function EntryForm({ onSubmit, isLoading, error }) {
       await onSubmit({
         ...data,
         cost: parseFloat(data.cost),
+        splitCount: parseInt(data.splitCount, 10),
+        trialReminderDays: parseInt(data.trialReminderDays, 10),
       });
       reset();
+      setShowAdvanced(false);
     } catch (err) {
       // Error is handled by parent
     } finally {
@@ -101,7 +153,7 @@ export default function EntryForm({ onSubmit, isLoading, error }) {
 
   const formIsLoading = isLoading || isSubmitting;
 
-  // Get tomorrow's date as minimum date for date picker
+  // Get today's date as minimum date for date picker
   const getMinDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -165,6 +217,141 @@ export default function EntryForm({ onSubmit, isLoading, error }) {
             required: 'Renewal date is required',
           })}
         />
+
+        {/* Feature 2: Notes */}
+        <FormRow>
+          <TextField
+            label="Notes (optional)"
+            placeholder="e.g., shared with roommate, cancel before trial ends"
+            error={errors.notes?.message}
+            disabled={formIsLoading}
+            {...register('notes', {
+              maxLength: {
+                value: 1000,
+                message: 'Notes must be at most 1000 characters',
+              },
+            })}
+          />
+        </FormRow>
+
+        {/* Advanced Options Toggle */}
+        <FormRow>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+          </Button>
+        </FormRow>
+
+        {/* Advanced Options */}
+        {showAdvanced && (
+          <>
+            {/* Feature 3: Cost-splitting */}
+            <FormRow>
+              <SectionTitle>Cost Splitting</SectionTitle>
+              <CheckboxContainer>
+                <CheckboxInput
+                  type="checkbox"
+                  id="isShared"
+                  disabled={formIsLoading}
+                  {...register('isShared')}
+                />
+                <CheckboxLabel htmlFor="isShared">
+                  This subscription is shared with others
+                </CheckboxLabel>
+              </CheckboxContainer>
+            </FormRow>
+
+            {isShared && (
+              <>
+                <TextField
+                  label="Split Count"
+                  type="number"
+                  placeholder="2"
+                  min="2"
+                  max="100"
+                  error={errors.splitCount?.message}
+                  disabled={formIsLoading}
+                  {...register('splitCount', {
+                    required: isShared ? 'Split count is required' : false,
+                    min: {
+                      value: 2,
+                      message: 'Split count must be at least 2',
+                    },
+                    valueAsNumber: true,
+                  })}
+                />
+
+                <TextField
+                  label="Split Note (optional)"
+                  placeholder="e.g., split with John and Jane"
+                  error={errors.splitNote?.message}
+                  disabled={formIsLoading}
+                  {...register('splitNote', {
+                    maxLength: {
+                      value: 255,
+                      message: 'Split note must be at most 255 characters',
+                    },
+                  })}
+                />
+              </>
+            )}
+
+            {/* Feature 4: Free Trial Tracker */}
+            <FormRow>
+              <SectionTitle>Free Trial</SectionTitle>
+              <CheckboxContainer>
+                <CheckboxInput
+                  type="checkbox"
+                  id="isTrial"
+                  disabled={formIsLoading}
+                  {...register('isTrial')}
+                />
+                <CheckboxLabel htmlFor="isTrial">
+                  This is a free trial subscription
+                </CheckboxLabel>
+              </CheckboxContainer>
+            </FormRow>
+
+            {isTrial && (
+              <>
+                <DatePicker
+                  label="Trial End Date"
+                  min={getMinDate()}
+                  error={errors.trialEndDate?.message}
+                  disabled={formIsLoading}
+                  {...register('trialEndDate', {
+                    required: isTrial ? 'Trial end date is required' : false,
+                  })}
+                />
+
+                <TextField
+                  label="Reminder Days Before Trial Ends"
+                  type="number"
+                  placeholder="3"
+                  min="1"
+                  max="30"
+                  error={errors.trialReminderDays?.message}
+                  disabled={formIsLoading}
+                  {...register('trialReminderDays', {
+                    min: {
+                      value: 1,
+                      message: 'Reminder days must be at least 1',
+                    },
+                    max: {
+                      value: 30,
+                      message: 'Reminder days must be at most 30',
+                    },
+                    valueAsNumber: true,
+                  })}
+                />
+              </>
+            )}
+          </>
+        )}
 
         <ButtonContainer>
           <Button

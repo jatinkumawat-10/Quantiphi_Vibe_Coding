@@ -1,17 +1,19 @@
 import styled from '@emotion/styled';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
+import ScienceIcon from '@mui/icons-material/Science';
 import MetricTile from './MetricTile.jsx';
 
 /**
  * Topbar Component
  * 
- * Renders two metric tiles:
+ * Renders three metric tiles:
  * 1. Total Monthly Burn Rate
  * 2. Upcoming Renewals Alert Count
+ * 3. Trials Ending Soon Count (Feature 4)
  * 
  * Props:
- * - metrics: { totalMonthlyBurnRate: number, upcomingRenewalsCount: number }
+ * - metrics: { totalMonthlyBurnRate: number, upcomingRenewalsCount: number, trialEndingCount: number }
  */
 
 const TopbarContainer = styled.div`
@@ -47,6 +49,14 @@ export default function Topbar({ metrics }) {
         icon={<NotificationImportantIcon />}
         color="rgba(255, 152, 0, 0.1)"
       />
+      {metrics.trialEndingCount > 0 && (
+        <MetricTile
+          label="Trials Ending"
+          value={metrics.trialEndingCount}
+          icon={<ScienceIcon />}
+          color="rgba(156, 39, 176, 0.1)"
+        />
+      )}
     </TopbarContainer>
   );
 }

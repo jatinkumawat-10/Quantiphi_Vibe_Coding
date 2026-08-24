@@ -2,7 +2,7 @@ import * as subscriptionService from './subscription.service.js';
 
 /**
  * POST /api/subscriptions
- * Create a new subscription
+ * Create a new subscription (with new fields)
  */
 export async function create(req, res, next) {
   try {
@@ -35,6 +35,24 @@ export async function getAll(req, res, next) {
 }
 
 /**
+ * PATCH /api/subscriptions/:id
+ * Update a subscription (notes, cost-splitting, trial, etc.)
+ */
+export async function update(req, res, next) {
+  try {
+    const { id } = req.params;
+    const subscription = await subscriptionService.updateSubscription(id, req.user.id, req.body);
+
+    res.json({
+      success: true,
+      data: subscription,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * PATCH /api/subscriptions/:id/status
  * Toggle subscription status (ACTIVE/PAUSED)
  */
@@ -60,7 +78,7 @@ export async function updateStatus(req, res, next) {
 
 /**
  * GET /api/subscriptions/metrics
- * Get dashboard metrics (burn rate + upcoming renewals)
+ * Get dashboard metrics (burn rate + upcoming renewals + trial ending)
  */
 export async function getMetrics(req, res, next) {
   try {

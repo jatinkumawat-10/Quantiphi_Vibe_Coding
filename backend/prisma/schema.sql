@@ -33,15 +33,25 @@ CREATE TABLE users (
 -- ============================================================
 
 CREATE TABLE subscriptions (
-    id                UUID                PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id           UUID                NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    service_name      VARCHAR(100)        NOT NULL,
-    cost              DECIMAL(10, 2)      NOT NULL CHECK (cost > 0),
-    billing_cycle     billing_cycle       NOT NULL,
-    next_renewal_date DATE                NOT NULL,
-    status            subscription_status NOT NULL DEFAULT 'ACTIVE',
-    created_at        TIMESTAMPTZ         NOT NULL DEFAULT now(),
-    updated_at        TIMESTAMPTZ         NOT NULL DEFAULT now()
+    id                   UUID                PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id              UUID                NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    service_name         VARCHAR(100)        NOT NULL,
+    cost                 DECIMAL(10, 2)      NOT NULL CHECK (cost > 0),
+    billing_cycle        billing_cycle       NOT NULL,
+    next_renewal_date    DATE                NOT NULL,
+    status               subscription_status NOT NULL DEFAULT 'ACTIVE',
+    -- Feature 2: Notes (free-text)
+    notes                TEXT,
+    -- Feature 3: Cost-splitting (shared subscriptions)
+    is_shared            BOOLEAN             NOT NULL DEFAULT FALSE,
+    split_count          INT                 NOT NULL DEFAULT 1,
+    split_note           VARCHAR(255),
+    -- Feature 4: Free trial tracker
+    is_trial             BOOLEAN             NOT NULL DEFAULT FALSE,
+    trial_end_date       DATE,
+    trial_reminder_days  INT                 NOT NULL DEFAULT 3,
+    created_at           TIMESTAMPTZ         NOT NULL DEFAULT now(),
+    updated_at           TIMESTAMPTZ         NOT NULL DEFAULT now()
 );
 
 -- ============================================================
@@ -78,10 +88,3 @@ CREATE TRIGGER update_subscriptions_updated_at
     BEFORE UPDATE ON subscriptions
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================================
--- Seed data (optional - uncomment for development)
--- ============================================================
-
--- INSERT INTO users (username, password_hash) VALUES
--- ('demo_user', '$2b$12$...'); -- Replace with actual bcrypt hash
